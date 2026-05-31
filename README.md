@@ -41,6 +41,46 @@ node add-user.js
 
 ---
 
+## Безкоштовна PostgreSQL база даних (Neon.tech)
+
+### Чому PostgreSQL замість SQLite?
+
+На безкоштовному тарифі Render файлова система **ефемерна** — при перезапуску сервера SQLite база видаляється. PostgreSQL на Neon.tech зберігає дані назавжди.
+
+### Ліміти Neon Free Tier (2026)
+- **500 МБ** сховища на проєкт citeweb_search:57#2
+- **100 CU-годин** на місяць (достатньо для 24/7 роботи невеликого проєкту) citeweb_search:57#4
+- **Безкоштовно**, без кредитної картки
+- **Scale-to-zero** — база зупиняється при бездіяльності, але дані зберігаються
+
+### Крок 1: Створити базу на Neon
+
+1. Зайдіть на [neon.tech](https://neon.tech)
+2. Sign Up з GitHub (безкоштовно, без картки)
+3. Create New Project → назвіть `safety-db`
+4. Скопіюйте **Connection String**:
+```
+postgres://safety_user:password@ep-xxx.us-east-1.aws.neon.tech/safety_db?sslmode=require
+```
+
+### Крок 2: Деплой на Render з PostgreSQL
+
+1. Запуште репозиторій на GitHub
+2. На Render: **New +** → **Blueprint** → ваш репозиторій
+3. Render автоматично створить:
+   - **safety-backend** — Node.js API
+   - **safety-frontend** — React статичний сайт
+   - **safety-db** — PostgreSQL база (Render PostgreSQL free tier, або підключіть Neon)
+4. Додайте `DATABASE_URL` в Environment Variables бекенду:
+   - Key: `DATABASE_URL`
+   - Value: `ваш connection string з Neon`
+
+### Крок 3: Перевірка
+
+Після деплою дані зберігаються в PostgreSQL назавжди, навіть при перезапуску сервера.
+
+---
+
 ## Деплой на Render (безкоштовно)
 
 ### Автоматичний деплой через Blueprint

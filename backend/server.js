@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { initDatabase } = require('./database');
+const { initDatabase: initDatabasePg } = require('./database-pg');
 const { seedDefaultUsers } = require('./seed');
 
 const authRoutes = require('./routes/auth');
@@ -23,7 +24,13 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-initDatabase();
+if (process.env.DATABASE_URL) {
+  console.log('Using PostgreSQL database');
+  initDatabasePg().catch(console.error);
+} else {
+  console.log('Using SQLite database');
+  initDatabase();
+}
 seedDefaultUsers().catch(console.error);
 
 app.use('/api/auth', authRoutes);
