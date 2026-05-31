@@ -22,7 +22,9 @@ export default function ImportPage() {
     const reader = new FileReader()
     reader.onload = (event) => {
       const data = new Uint8Array(event.target.result)
-      const workbook = xlsx.read(data, { type: 'array' })
+      
+      // ДОБАВИЛИ ОПЦИЮ: cellDates: true, чтобы даты парсились как объекты Date, а не числа
+      const workbook = xlsx.read(data, { type: 'array', cellDates: true })
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
       const jsonData = xlsx.utils.sheet_to_json(firstSheet, { header: 1 })
 
@@ -35,7 +37,14 @@ export default function ImportPage() {
       const rows = jsonData.slice(1, 6).map(row => {
         const obj = {}
         headers.forEach((h, i) => {
-          obj[h] = row[i] || ''
+          let value = row[i]
+          
+          // Проверяем: если это объект даты, переводим его в строку YYYY-MM-DD для таблицы предпросмотра
+          if (value instanceof Date && !isNaN(value.getTime())) {
+            value = value.toISOString().split('T')[0]
+          }
+          
+          obj[h] = value || ''
         })
         return obj
       })
@@ -54,7 +63,9 @@ export default function ImportPage() {
     reader.onload = async (event) => {
       try {
         const data = new Uint8Array(event.target.result)
-        const workbook = xlsx.read(data, { type: 'array' })
+        
+        // ЗДЕСЬ ТОЖЕ ДОБАВИЛИ: cellDates: true, чтобы на бэкенд улетали ISO-строки дат вместо чисел
+        const workbook = xlsx.read(data, { type: 'array', cellDates: true })
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
         const jsonData = xlsx.utils.sheet_to_json(firstSheet)
 

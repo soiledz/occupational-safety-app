@@ -124,17 +124,34 @@ router.post('/records', authenticateToken, requireRole('superadmin', 'hospital_m
       const settings = await dbGet('SELECT months_period FROM periodicity_settings WHERE hospital_id = ? AND category = ?', [targetHospitalId, category]);
       const months = settings ? settings.months_period : 12;
 
+      let formattedLastDate = null;
       let nextDate = null;
+
       if (lastDate) {
-        const ld = new Date(lastDate);
-        const nd = new Date(ld);
-        nd.setMonth(nd.getMonth() + months);
-        nextDate = nd.toISOString().split('T')[0];
+        let ld;
+        
+        // Проверяем: если пришло число (или строка-число вроде "45616") — конвертируем из формата Excel
+        if (!isNaN(lastDate) && !isNaN(parseFloat(lastDate))) {
+          ld = new Date((parseFloat(lastDate) - 25569) * 86400 * 1000);
+        } else {
+          // Если пришла обычная строка даты (например, "2025-05-15")
+          ld = new Date(lastDate);
+        }
+
+        // Если дата успешно распознана, приводим её в формат YYYY-MM-DD
+        if (!isNaN(ld.getTime())) {
+          formattedLastDate = ld.toISOString().split('T')[0];
+          
+          const nd = new Date(ld);
+          nd.setMonth(nd.getMonth() + months);
+          nextDate = nd.toISOString().split('T')[0];
+        }
       }
 
+      // Записываем в базу уже гарантированно валидные строки дат (или null)
       await dbRun(
         'INSERT INTO control_records (employee_id, object_name, category, last_date, next_date) VALUES (?, ?, ?, ?, ?)',
-        [employeeId, objectName || null, category, lastDate || null, nextDate]
+        [employeeId, objectName || null, category, formattedLastDate, nextDate]
       );
       results.imported++;
     }
