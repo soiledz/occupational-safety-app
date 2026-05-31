@@ -139,9 +139,18 @@ async function dbAll(sql, params = []) {
 }
 
 async function dbRun(sql, params = []) {
-  const pgSql = convertPlaceholders(sql);
+  let pgSql = convertPlaceholders(sql);
+  
+  // Автоматически добавляем 'RETURNING id' для всех запросов INSERT,
+  // если этого слова еще нет в запросе. Это заставит Postgres
+  // возвращать новый ID так же, как это делает SQLite через lastID.
+  if (/^\s*insert\s+/i.test(pgSql) && !/returning/i.test(pgSql)) {
+    pgSql += ' RETURNING id';
+  }
+  
   const result = await pool.query(pgSql, params);
   return { 
+    // Если Postgres вернул строку с id, берем его, иначе 0
     lastID: result.rows[0]?.id || 0, 
     changes: result.rowCount 
   };
