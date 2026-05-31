@@ -10,6 +10,37 @@ occupational-safety-app/
 └── frontend/         # React + Vite + Tailwind CSS
 ```
 
+## Додавання користувачів (для програміста)
+
+### Локально (після клонування репозиторію)
+
+```bash
+cd backend
+npm install
+
+# Інтерактивний режим — задасть питання і створить користувача
+node add-user.js
+
+# Або через npm
+npm run add-user
+```
+
+### На Render (вже задеплоєно)
+
+1. Зайдіть в **Render Dashboard** → ваш бекенд сервіс
+2. Перейдіть в **Shell** (вкладка вверху)
+3. Виконайте:
+```bash
+cd backend
+node add-user.js
+```
+
+### Windows (для не-програмістів)
+
+Просто запустіть файл `backend/add-user.bat` — відкриється консоль з інструкціями.
+
+---
+
 ## Деплой на Render (безкоштовно)
 
 ### Автоматичний деплой через Blueprint

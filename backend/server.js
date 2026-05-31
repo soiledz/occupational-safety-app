@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { initDatabase } = require('./database');
+const { seedDefaultUsers } = require('./seed');
 
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
@@ -23,6 +24,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 initDatabase();
+seedDefaultUsers().catch(console.error);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);

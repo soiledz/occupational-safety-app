@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "add-user": "node add-user.js",
     "dev": "nodemon server.js"
   },
   "dependencies": {
