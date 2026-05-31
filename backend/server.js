@@ -15,10 +15,20 @@ const importRoutes = require('./routes/import');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+const allowedOrigins = [
+  'https://safety-frontend-8vqf.onrender.com',
+  'https://safety-frontend.onrender.com',
+  'http://localhost:5173'
+];
+
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? (process.env.CORS_ORIGIN || 'https://safety-frontend.onrender.com')
-    : 'http://localhost:5173',
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 };
 app.use(cors(corsOptions));
