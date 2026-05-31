@@ -82,7 +82,7 @@ router.post('/records', authenticateToken, requireRole('superadmin', 'hospital_m
   try {
     for (const row of data) {
       const fullName = row['ПІБ'] || row['full_name'];
-      const objectName = row["Об'єкт"] || row["object_name"];
+      const objectName = row["Об\'єкт"] || row["object_name"];
       const categoryRaw = row['Категорія'] || row['Категория'] || row['category'];
       const lastDate = row['Остання дата'] || row['Дата'] || row['last_date'];
 

@@ -14,11 +14,11 @@ services:
       - key: CORS_ORIGIN
         value: https://safety-frontend.onrender.com
 
-  - type: static
+  - type: web
     name: safety-frontend
-    runtime: static
+    runtime: node
     buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: ./frontend/dist
+    startCommand: cd frontend && npx serve dist -l 10000
     envVars:
       - key: VITE_API_URL
         value: https://safety-backend.onrender.com
