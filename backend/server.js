@@ -13,7 +13,7 @@ const recordsRoutes = require('./routes/records');
 const importRoutes = require('./routes/import');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 10000;
 
 const allowedOrigins = [
   'https://safety-frontend-8vqf.onrender.com',
@@ -34,15 +34,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-if (process.env.DATABASE_URL) {
-  console.log('Using PostgreSQL database');
-  initDatabasePg().catch(console.error);
-} else {
-  console.log('Using SQLite database');
-  initDatabase();
-}
-seedDefaultUsers().catch(console.error);
-
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/employees', employeesRoutes);
@@ -59,9 +50,37 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log('Default users:');
-  console.log('  Superadmin: admin@system.ua / admin123');
-  console.log('  Manager:    manager@hospital1.ua / manager123');
-});
+// Асинхронная функция запуска базы данных и сервера
+const startServer = async () => {
+  try {
+    if (process.env.DATABASE_URL) {
+      console.log('Using PostgreSQL database');
+      // Ожидаем полную инициализацию Postgres
+      await initDatabasePg(); 
+      console.log('PostgreSQL database initialized successfully');
+    } else {
+      console.log('Using SQLite database');
+      // Ожидаем инициализацию SQLite и сид пользователей последовательно
+      await initDatabase();
+      await seedDefaultUsers();
+      console.log('SQLite database initialized and seeded successfully');
+    }
+
+    // Запуск прослушивания порта только после успешной готовности базы данных
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+      if (!process.env.DATABASE_URL) {
+        console.log('Default users (SQLite only):');
+        console.log('  Superadmin: admin@system.ua / admin123');
+        console.log('  Manager:    manager@hospital1.ua / manager123');
+      }
+    });
+
+  } catch (error) {
+    console.error('Critical error during server startup:', error);
+    process.exit(1); // Завершаем процесс, если база не подключилась
+  }
+};
+
+// Запуск приложения
+startServer();
