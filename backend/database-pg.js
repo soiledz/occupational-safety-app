@@ -1,7 +1,5 @@
 const { Pool } = require('pg');
 
-// Use DATABASE_URL from environment (Neon, Supabase, etc.)
-// Format: postgres://user:password@host:port/database
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
@@ -10,8 +8,6 @@ const pool = new Pool({
 async function initDatabase() {
   const client = await pool.connect();
   try {
-    // Enable foreign keys (not needed in PostgreSQL, but for compatibility)
-
     // 1. Hospitals
     await client.query(`
       CREATE TABLE IF NOT EXISTS hospitals (
@@ -81,7 +77,7 @@ async function initDatabase() {
 
     console.log('PostgreSQL database initialized successfully');
 
-    // Check if seed data exists
+    // Проверка сид-данных
     const result = await client.query('SELECT COUNT(*) as count FROM hospitals');
     if (parseInt(result.rows[0].count) === 0) {
       await seedData(client);
@@ -94,24 +90,20 @@ async function initDatabase() {
 async function seedData(client) {
   const bcrypt = require('bcryptjs');
 
-  // Insert hospital
   const hospitalResult = await client.query(
     'INSERT INTO hospitals (name, address) VALUES ($1, $2) RETURNING id',
     ['Лікарня №1', 'м. Одеса, вул. Приморська, 1']
   );
   const hospitalId = hospitalResult.rows[0].id;
 
-  // Insert departments
   await client.query('INSERT INTO departments (hospital_id, name) VALUES ($1, $2)', [hospitalId, 'Хірургічне відділення']);
   await client.query('INSERT INTO departments (hospital_id, name) VALUES ($1, $2)', [hospitalId, 'Терапевтичне відділення']);
   await client.query('INSERT INTO departments (hospital_id, name) VALUES ($1, $2)', [hospitalId, 'Поліклініка']);
 
-  // Insert periodicity settings
   await client.query('INSERT INTO periodicity_settings (hospital_id, category, months_period) VALUES ($1, $2, $3)', [hospitalId, 'instruction', 12]);
   await client.query('INSERT INTO periodicity_settings (hospital_id, category, months_period) VALUES ($1, $2, $3)', [hospitalId, 'medical', 12]);
   await client.query('INSERT INTO periodicity_settings (hospital_id, category, months_period) VALUES ($1, $2, $3)', [hospitalId, 'extinguisher', 12]);
 
-  // Insert users
   const superHash = bcrypt.hashSync('admin123', 10);
   await client.query(
     'INSERT INTO users (hospital_id, email, password_hash, role) VALUES ($1, $2, $3, $4)',
@@ -124,22 +116,31 @@ async function seedData(client) {
     [hospitalId, 'manager@hospital1.ua', managerHash, 'hospital_manager']
   );
 
-  console.log('Seed data inserted');
+  console.log('Seed data inserted into PostgreSQL');
 }
 
-// Promisified query helpers (same API as sqlite3 version)
+// Хелпер автоматической конвертации знаков "?" в "$1, $2, ..." для Postgres
+// Избавляет от необходимости переписывать SQL-код внутри роутов
+function convertPlaceholders(sql) {
+  let index = 1;
+  return sql.replace(/\?/g, () => `$${index++}`);
+}
+
 async function dbGet(sql, params = []) {
-  const result = await pool.query(sql, params);
+  const pgSql = convertPlaceholders(sql);
+  const result = await pool.query(pgSql, params);
   return result.rows[0] || null;
 }
 
 async function dbAll(sql, params = []) {
-  const result = await pool.query(sql, params);
+  const pgSql = convertPlaceholders(sql);
+  const result = await pool.query(pgSql, params);
   return result.rows;
 }
 
 async function dbRun(sql, params = []) {
-  const result = await pool.query(sql, params);
+  const pgSql = convertPlaceholders(sql);
+  const result = await pool.query(pgSql, params);
   return { 
     lastID: result.rows[0]?.id || 0, 
     changes: result.rowCount 
