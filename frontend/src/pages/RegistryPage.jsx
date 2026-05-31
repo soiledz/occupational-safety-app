@@ -14,6 +14,12 @@ const categoryBadgeColors = {
   extinguisher: 'bg-orange-100 text-orange-700'
 }
 
+// Вспомогательная функция для очистки даты от ISO-хвоста PostgreSQL
+const formatDate = (dateStr) => {
+  if (!dateStr) return '—'
+  return dateStr.split('T')[0]
+}
+
 export default function RegistryPage() {
   const { authFetch } = useAuth()
   const [records, setRecords] = useState([])
@@ -114,7 +120,8 @@ export default function RegistryPage() {
       employee_id: record.employee_id || '',
       object_name: record.object_name || '',
       category: record.category,
-      last_date: record.last_date || ''
+      // Форматируем для <input type="date">, которому нужен строгий формат YYYY-MM-DD
+      last_date: record.last_date ? record.last_date.split('T')[0] : ''
     })
     setShowAddModal(true)
   }
@@ -211,10 +218,12 @@ export default function RegistryPage() {
                       {record.position && <div className="text-xs text-slate-400">{record.position}</div>}
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600">{record.department_name || '—'}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{record.last_date || '—'}</td>
+                    {/* Применяем форматирование для Остання дата */}
+                    <td className="px-6 py-4 text-sm text-slate-600">{formatDate(record.last_date)}</td>
+                    {/* Применяем форматирование для Наступна дата */}
                     <td className="px-6 py-4 text-sm">
                       <span className={getStatusColor(record.next_date)}>
-                        {record.next_date || '—'}
+                        {formatDate(record.next_date)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
